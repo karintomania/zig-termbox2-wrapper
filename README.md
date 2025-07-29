@@ -1,9 +1,40 @@
 # zig termbox2 wrapper
-This repo is a wrapper of https://github.com/termbox/termbox2.
+
+This repo is a wrapper for https://github.com/termbox/termbox2.
 I intend to simply expose the original functions to zig as-is and nothing more.
 
+# Dependencies
+
+This repo uses `termbox2`. Also, it dynamically links `libc`.
+
 # Example
-Running `zig build simple` will run `examples/simple.zig`.
+
+Clone this repo and run `zig build simple` to run a simple example program.
+The source code for it is `examples/simple.zig`.
+
+# How to Use
+
+Run the command below inside your project:
+```
+zig fetch --save git+https://github.com/karintomania/zig-termbox2-wrapper
+```
+
+Add the code below to your `build.zig` after the declaration of `const exe`.
+I'm naming it `ztb` (as zig termbox) because `zig_termbox2_wrapper` would be too long. You can name it whatever you want, though.
+```
+    const ztb = b.dependency("zig_termbox2_wrapper", .{
+        .target = target,
+        .optimize = optimize,
+    });
+
+    exe.root_module.addImport("ztb", ztb.module("zig_termbox2_wrapper"));
+```
+
+This should allow you to import the `ztb` module inside your code.
+```
+// inside your code
+const ztb = @import("ztb");
+```
 
 ## License
 
