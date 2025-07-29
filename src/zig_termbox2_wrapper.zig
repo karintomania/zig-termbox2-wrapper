@@ -87,8 +87,24 @@ pub fn peekEvent(event: *Event, timeout_ms: i32) !bool {
 }
 
 pub fn pollEvent(event: *Event) !void {
-    const result = c.tb_poll_event(event);
-    if (result != 0) return error.PollEventFailed;
+    while (true) {
+        const result = c.tb_poll_event(event);
+        if (result == 0) {
+            return;
+        }
+        
+        // Handle TB_ERR_POLL (-14) which can occur during window resize
+        if (result == -14) {
+            const errno = c.tb_last_errno();
+            if (errno == 4) { // EINTR
+                continue; // Retry on interrupted system call
+            }
+        }
+        
+        shutdown();
+        std.debug.print("error no: {d}", .{result});
+        return error.PollEventFailed;
+    }
 }
 
 pub fn print(x: i32, y: i32, fg: u32, bg: u32, str: []const u8) !void {
