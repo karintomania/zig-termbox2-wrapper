@@ -1,6 +1,6 @@
 const std = @import("std");
 const c = @cImport({
-    @cDefine("TB_OPT_ATTR_W", "32");
+    @cDefine("TB_OPT_ATTR_W", "64");
     @cInclude("termbox2.h");
     @cInclude("locale.h");
 });
@@ -45,17 +45,17 @@ pub fn hideCursor() !void {
     if (result != 0) return error.HideCursorFailed;
 }
 
-pub fn setCell(x: i32, y: i32, ch: u32, fg: u32, bg: u32) !void {
+pub fn setCell(x: i32, y: i32, ch: u32, fg: u64, bg: u64) !void {
     const result = c.tb_set_cell(x, y, ch, fg, bg);
     if (result != 0) return error.SetCellFailed;
 }
 
-pub fn setCellEx(x: i32, y: i32, ch: []const u32, fg: u32, bg: u32) !void {
+pub fn setCellEx(x: i32, y: i32, ch: []const u32, fg: u64, bg: u64) !void {
     const result = c.tb_set_cell_ex(x, y, @ptrCast(@constCast(ch.ptr)), ch.len, fg, bg);
     if (result != 0) return error.SetCellFailed;
 }
 
-pub fn setCellUnicode(x: i32, y: i32, str: []const u8, fg: u32, bg: u32) !void {
+pub fn setCellUnicode(x: i32, y: i32, str: []const u8, fg: u64, bg: u64) !void {
     var codepoints: [16]u32 = undefined;
     var i: usize = 0;
     var idx: usize = 0;
@@ -74,22 +74,49 @@ pub fn setCellUnicode(x: i32, y: i32, str: []const u8, fg: u32, bg: u32) !void {
     try setCellEx(x, y, codepoints[0..idx], fg, bg);
 }
 
-pub const Event = c.tb_event;
+pub const Event = extern struct {
+    type: u8,
+    mod: u8,
+    key: u16,
+    ch: u32,
+    // for resize event
+    w: i32,
+    h: i32,
+    // for mouse event
+    x: i32,
+    y: i32,
+};
+
+fn convertFromCEvent(event: *Event, c_event: *const c.struct_tb_event) void {
+    event.type = c_event.type;
+    event.mod = c_event.mod;
+    event.key = c_event.key;
+    event.ch = c_event.ch;
+    event.w = c_event.w;
+    event.h = c_event.h;
+    event.x = c_event.x;
+    event.y = c_event.y;
+}
 
 pub fn newEvent() Event {
     return std.mem.zeroes(Event);
 }
 
 pub fn peekEvent(event: *Event, timeout_ms: i32) !bool {
-    const result = c.tb_peek_event(event, timeout_ms);
+    var c_event: c.struct_tb_event = undefined;
+    const result = c.tb_peek_event(&c_event, timeout_ms);
     if (result < 0) return error.PeekEventFailed;
+    
+    convertFromCEvent(event, &c_event);
     return result > 0;
 }
 
 pub fn pollEvent(event: *Event) !void {
     while (true) {
-        const result = c.tb_poll_event(event);
+        var c_event: c.struct_tb_event = undefined;
+        const result = c.tb_poll_event(&c_event);
         if (result == 0) {
+            convertFromCEvent(event, &c_event);
             return;
         }
         
@@ -107,7 +134,7 @@ pub fn pollEvent(event: *Event) !void {
     }
 }
 
-pub fn print(x: i32, y: i32, fg: u32, bg: u32, str: []const u8) !void {
+pub fn print(x: i32, y: i32, fg: u64, bg: u64, str: []const u8) !void {
     var buf: [1024]u8 = undefined;
     if (str.len >= buf.len) return error.StringTooLong;
 
@@ -119,7 +146,7 @@ pub fn print(x: i32, y: i32, fg: u32, bg: u32, str: []const u8) !void {
     if (result != 0) return error.PrintFailed;
 }
 
-pub fn printf(x: i32, y: i32, fg: u32, bg: u32, comptime fmt: []const u8, args: anytype) !void {
+pub fn printf(x: i32, y: i32, fg: u64, bg: u64, comptime fmt: []const u8, args: anytype) !void {
     var buf: [1024]u8 = undefined;
     const formatted = try std.fmt.bufPrint(&buf, fmt, args);
     try print(x, y, fg, bg, formatted);
@@ -127,6 +154,14 @@ pub fn printf(x: i32, y: i32, fg: u32, bg: u32, comptime fmt: []const u8, args: 
 
 pub fn hasEgc() bool {
     return c.tb_has_egc() != 0;
+}
+
+pub fn setInputMode(mode: c_int) void {
+    _ = c.tb_set_input_mode(mode);
+}
+
+pub fn setOutputMode(mode: c_int) void {
+    _= c.tb_set_output_mode(mode);
 }
 
 // Key constants
@@ -242,15 +277,15 @@ pub const MOD_SHIFT = c.TB_MOD_SHIFT;
 pub const MOD_MOTION = c.TB_MOD_MOTION;
 
 // Input modes
-pub const INPUT_CURRENT = c.TB_INPUT_CURRENT;
-pub const INPUT_ESC = c.TB_INPUT_ESC;
-pub const INPUT_ALT = c.TB_INPUT_ALT;
-pub const INPUT_MOUSE = c.TB_INPUT_MOUSE;
+pub const INPUT_CURRENT: c_int = c.TB_INPUT_CURRENT;
+pub const INPUT_ESC: c_int = c.TB_INPUT_ESC;
+pub const INPUT_ALT: c_int = c.TB_INPUT_ALT;
+pub const INPUT_MOUSE: c_int = c.TB_INPUT_MOUSE;
 
 // Output modes
-pub const OUTPUT_CURRENT = c.TB_OUTPUT_CURRENT;
-pub const OUTPUT_NORMAL = c.TB_OUTPUT_NORMAL;
-pub const OUTPUT_256 = c.TB_OUTPUT_256;
-pub const OUTPUT_216 = c.TB_OUTPUT_216;
-pub const OUTPUT_GRAYSCALE = c.TB_OUTPUT_GRAYSCALE;
-pub const OUTPUT_TRUECOLOR = c.TB_OUTPUT_TRUECOLOR;
+pub const OUTPUT_CURRENT: c_int = c.TB_OUTPUT_CURRENT;
+pub const OUTPUT_NORMAL: c_int = c.TB_OUTPUT_NORMAL;
+pub const OUTPUT_256: c_int = c.TB_OUTPUT_256;
+pub const OUTPUT_216: c_int = c.TB_OUTPUT_216;
+pub const OUTPUT_GRAYSCALE: c_int = c.TB_OUTPUT_GRAYSCALE;
+pub const OUTPUT_TRUECOLOR: c_int = c.TB_OUTPUT_TRUECOLOR;

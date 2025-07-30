@@ -3,5 +3,5 @@
 // See here for the hack to run single-header c
 // https://ziggit.dev/t/using-a-single-header-c-library-from-zig/1913/9
 #define TB_IMPL
-#define TB_OPT_ATTR_W 32
+#define TB_OPT_ATTR_W 64
 #include "termbox2.h"

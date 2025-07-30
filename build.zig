@@ -23,7 +23,7 @@ pub fn build(b: *std.Build) void {
 
     b.installArtifact(lib);
 
-    // running step of an example
+    // running step of simple example
     const simple_run_step = b.step("simple", "Run example/simple.zig");
     const simple = b.addExecutable(.{
         .name = "simple",
@@ -35,4 +35,17 @@ pub fn build(b: *std.Build) void {
     b.installArtifact(simple);
     const simple_run = b.addRunArtifact(simple);
     simple_run_step.dependOn(&simple_run.step);
+
+    // running step of events example
+    const events_run_step = b.step("events", "Run example/events.zig");
+    const events = b.addExecutable(.{
+        .name = "events",
+        .root_source_file = b.path("examples/events.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    events.root_module.addImport("ztb", ztb_mod);
+    b.installArtifact(events);
+    const events_run = b.addRunArtifact(events);
+    events_run_step.dependOn(&events_run.step);
 }
