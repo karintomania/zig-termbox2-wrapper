@@ -5,12 +5,67 @@ const c = @cImport({
     @cInclude("locale.h");
 });
 
+pub const TermboxError = error{
+    TbError,
+    NeedMore,
+    InitAlready,
+    InitOpen,
+    Mem,
+    NoEvent,
+    NoTerm,
+    NotInit,
+    OutOfBounds,
+    Read,
+    ResizeIoctl,
+    ResizePipe,
+    ResizeSigaction,
+    Poll,
+    TcGetAttr,
+    TcSetAttr,
+    UnsupportedTerm,
+    ResizeWrite,
+    ResizePoll,
+    ResizeRead,
+    ResizeSscanf,
+    CapCollision,
+    UnknownError,
+};
+
+pub fn handleError(result: c_int) TermboxError!void {
+    switch (result) {
+        0 => return,
+        c.TB_ERR => return error.TbError,
+        c.TB_ERR_NEED_MORE => return error.NeedMore,
+        c.TB_ERR_INIT_ALREADY => return error.InitAlready,
+        c.TB_ERR_INIT_OPEN => return error.InitOpen,
+        c.TB_ERR_MEM => return error.Mem,
+        c.TB_ERR_NO_EVENT => return error.NoEvent,
+        c.TB_ERR_NO_TERM => return error.NoTerm,
+        c.TB_ERR_NOT_INIT => return error.NotInit,
+        c.TB_ERR_OUT_OF_BOUNDS => return error.OutOfBounds,
+        c.TB_ERR_READ => return error.Read,
+        c.TB_ERR_RESIZE_IOCTL => return error.ResizeIoctl,
+        c.TB_ERR_RESIZE_PIPE => return error.ResizePipe,
+        c.TB_ERR_RESIZE_SIGACTION => return error.ResizeSigaction,
+        c.TB_ERR_POLL => return error.Poll,
+        c.TB_ERR_TCGETATTR => return error.TcGetAttr,
+        c.TB_ERR_TCSETATTR => return error.TcSetAttr,
+        c.TB_ERR_UNSUPPORTED_TERM => return error.UnsupportedTerm,
+        c.TB_ERR_RESIZE_WRITE => return error.ResizeWrite,
+        c.TB_ERR_RESIZE_POLL => return error.ResizePoll,
+        c.TB_ERR_RESIZE_READ => return error.ResizeRead,
+        c.TB_ERR_RESIZE_SSCANF => return error.ResizeSscanf,
+        c.TB_ERR_CAP_COLLISION => return error.CapCollision,
+        else => return error.UnknownError,
+    }
+}
+
 pub fn init() !void {
     // set locale to print non-ASCII chars
     _ = c.setlocale(c.LC_ALL, "");
 
     const result = c.tb_init();
-    if (result != 0) return error.InitFailed;
+    try handleError(result);
 }
 
 pub fn shutdown() void {
@@ -27,32 +82,32 @@ pub fn height() i32 {
 
 pub fn clear() !void {
     const result = c.tb_clear();
-    if (result != 0) return error.ClearFailed;
+    try handleError(result);
 }
 
 pub fn present() !void {
     const result = c.tb_present();
-    if (result != 0) return error.PresentFailed;
+    try handleError(result);
 }
 
 pub fn setCursor(cx: i32, cy: i32) !void {
     const result = c.tb_set_cursor(cx, cy);
-    if (result != 0) return error.SetCursorFailed;
+    try handleError(result);
 }
 
 pub fn hideCursor() !void {
     const result = c.tb_hide_cursor();
-    if (result != 0) return error.HideCursorFailed;
+    try handleError(result);
 }
 
 pub fn setCell(x: i32, y: i32, ch: u32, fg: u64, bg: u64) !void {
     const result = c.tb_set_cell(x, y, ch, fg, bg);
-    if (result != 0) return error.SetCellFailed;
+    try handleError(result);
 }
 
 pub fn setCellEx(x: i32, y: i32, ch: []const u32, fg: u64, bg: u64) !void {
     const result = c.tb_set_cell_ex(x, y, @ptrCast(@constCast(ch.ptr)), ch.len, fg, bg);
-    if (result != 0) return error.SetCellFailed;
+    try handleError(result);
 }
 
 pub fn setCellUnicode(x: i32, y: i32, str: []const u8, fg: u64, bg: u64) !void {
@@ -105,7 +160,9 @@ pub fn newEvent() Event {
 pub fn peekEvent(event: *Event, timeout_ms: i32) !bool {
     var c_event: c.struct_tb_event = undefined;
     const result = c.tb_peek_event(&c_event, timeout_ms);
-    if (result < 0) return error.PeekEventFailed;
+    if (result < 0) {
+        try handleError(result);
+    }
     
     convertFromCEvent(event, &c_event);
     return result > 0;
@@ -121,16 +178,14 @@ pub fn pollEvent(event: *Event) !void {
         }
         
         // Handle TB_ERR_POLL (-14) which can occur during window resize
-        if (result == -14) {
+        if (result == c.TB_ERR_POLL) {
             const errno = c.tb_last_errno();
             if (errno == 4) { // EINTR
                 continue; // Retry on interrupted system call
             }
         }
         
-        shutdown();
-        std.debug.print("error no: {d}", .{result});
-        return error.PollEventFailed;
+        try handleError(result);
     }
 }
 
@@ -143,7 +198,7 @@ pub fn print(x: i32, y: i32, fg: u64, bg: u64, str: []const u8) !void {
 
     var w: usize = 0;
     const result = c.tb_print_ex(x, y, fg, bg, &w, &buf);
-    if (result != 0) return error.PrintFailed;
+    try handleError(result);
 }
 
 pub fn printf(x: i32, y: i32, fg: u64, bg: u64, comptime fmt: []const u8, args: anytype) !void {
