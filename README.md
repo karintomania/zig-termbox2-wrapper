@@ -3,14 +3,17 @@
 This repo is a wrapper for https://github.com/termbox/termbox2.
 I intend to simply expose the original functions to zig as-is and nothing more.
 
-# Dependencies
-
-This repo uses `termbox2`. Also, it dynamically links `libc`.
-
 # Example
 
 Clone this repo and run `zig build simple` to run a simple example program.
 The source code for it is `examples/simple.zig`.
+
+Likewise, `zig build events` builds a demo to detect events like pressing keys, using mouse, and resizing window. Resize is a bit difficult to see in this GIF, but it works in my machine ;).
+![Image](https://github.com/user-attachments/assets/f57691a3-ba23-48d7-b63a-b0b41e9bdf0d)
+
+# Dependencies
+
+This repo uses `termbox2`. Also, it dynamically links `libc`.
 
 # How to Use
 
