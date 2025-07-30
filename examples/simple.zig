@@ -13,13 +13,14 @@ pub fn main() !void {
     const middleX: i32 = @divTrunc(w, 2);
     const middleY: i32 = @divTrunc(h, 2);
 
-    try ztb.print(middleX, middleY-3, ztb.WHITE, ztb.DEFAULT, "Hello termbox2!");
-    try ztb.print(middleX, middleY-1, ztb.BLUE | ztb.BOLD, ztb.DEFAULT, "Bold");
-    try ztb.print(middleX, middleY+0, ztb.RED | ztb.UNDERLINE, ztb.DEFAULT, "Underline");
-    try ztb.print(middleX, middleY+1, ztb.YELLOW | ztb.STRIKEOUT, ztb.DEFAULT, "Strikeout");
-    try ztb.print(middleX, middleY+2, ztb.GREEN | ztb.ITALIC, ztb.DEFAULT, "Italic");
-    try ztb.print(middleX, middleY+4, ztb.WHITE | ztb.BOLD, ztb.DEFAULT, "Press any key...");
-    try ztb.setCursor(middleX + 16, middleY + 1);
+    try ztb.print(middleX, middleY-4, ztb.DEFAULT, ztb.DEFAULT, "Hello termbox2!");
+    try ztb.print(middleX, middleY-2, ztb.BLUE | ztb.BOLD, ztb.DEFAULT, "Bold");
+    try ztb.print(middleX, middleY-1, ztb.RED | ztb.UNDERLINE, ztb.DEFAULT, "Underline");
+    try ztb.print(middleX, middleY+0, ztb.YELLOW | ztb.STRIKEOUT, ztb.DEFAULT, "Strikeout");
+    try ztb.print(middleX, middleY+1, ztb.GREEN | ztb.ITALIC, ztb.DEFAULT, "Italic");
+    try ztb.print(middleX, middleY+2, ztb.DEFAULT, ztb.DEFAULT, "Emoji ⚡");
+    try ztb.print(middleX, middleY+4, ztb.DEFAULT | ztb.BOLD, ztb.DEFAULT, "Press any key...");
+    try ztb.setCursor(middleX + 16, middleY + 4);
 
     // reflect the change
     try ztb.present();

@@ -196,8 +196,8 @@ pub fn print(x: i32, y: i32, fg: u64, bg: u64, str: []const u8) !void {
     @memcpy(buf[0..str.len], str);
     buf[str.len] = 0; // null terminate
 
-    var w: usize = 0;
-    const result = c.tb_print_ex(x, y, fg, bg, &w, &buf);
+    // var w: usize = 0;
+    const result = c.tb_print(x, y, fg, bg, &buf);
     try handleError(result);
 }
 

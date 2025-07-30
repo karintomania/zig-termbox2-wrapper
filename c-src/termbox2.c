@@ -4,4 +4,5 @@
 // https://ziggit.dev/t/using-a-single-header-c-library-from-zig/1913/9
 #define TB_IMPL
 #define TB_OPT_ATTR_W 64
+#define TB_OPT_EGC
 #include "termbox2.h"
