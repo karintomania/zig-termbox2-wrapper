@@ -2374,6 +2374,7 @@ int tb_height(void) {
 
 int tb_clear(void) {
     if_not_init_return();
+    cellbuf_clear(&global.front);
     return cellbuf_clear(&global.back);
 }
 
