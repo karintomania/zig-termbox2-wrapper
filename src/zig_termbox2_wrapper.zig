@@ -110,6 +110,37 @@ pub fn setCellEx(x: i32, y: i32, ch: []const u32, fg: u64, bg: u64) !void {
     try handleError(result);
 }
 
+pub fn extendCell(x: i32, y: i32, ch: u32) !void {
+    const result = c.tb_extend_cell(x, y, ch);
+    try handleError(result);
+}
+
+pub const Utf8CharResult = struct {
+    unicode: u32,
+    length: i32,
+};
+
+// returns UTF-32
+pub fn utf8CharToUnicode(utf8_char: []const u8) !Utf8CharResult {
+    var unicode: u32 = 0;
+    var buf: [8]u8 = undefined;
+    if (utf8_char.len >= buf.len) return error.StringTooLong;
+    
+    @memcpy(buf[0..utf8_char.len], utf8_char);
+    buf[utf8_char.len] = 0; // null terminate
+    
+    const result = c.tb_utf8_char_to_unicode(&unicode, &buf);
+    if (result < 0) {
+        try handleError(result);
+    }
+    if (result == 0) return error.EmptyString;
+    
+    return Utf8CharResult{
+        .unicode = unicode,
+        .length = result,
+    };
+}
+
 pub fn setCellUnicode(x: i32, y: i32, str: []const u8, fg: u64, bg: u64) !void {
     var codepoints: [16]u32 = undefined;
     var i: usize = 0;
