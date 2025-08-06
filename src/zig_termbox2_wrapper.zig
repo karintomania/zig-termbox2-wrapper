@@ -123,7 +123,7 @@ pub const Utf8CharResult = struct {
 // returns UTF-32
 pub fn utf8CharToUnicode(utf8_char: []const u8) !Utf8CharResult {
     var unicode: u32 = 0;
-    var buf: [8]u8 = undefined;
+    var buf: [512]u8 = undefined;
     if (utf8_char.len >= buf.len) return error.StringTooLong;
     
     @memcpy(buf[0..utf8_char.len], utf8_char);
