@@ -27,9 +27,11 @@ pub fn build(b: *std.Build) void {
     const simple_run_step = b.step("simple", "Run example/simple.zig");
     const simple = b.addExecutable(.{
         .name = "simple",
-        .root_source_file = b.path("examples/simple.zig"),
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.addModule("simple-example", .{
+            .root_source_file = b.path("examples/simple.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
     });
     simple.root_module.addImport("ztb", ztb_mod);
     b.installArtifact(simple);
@@ -40,9 +42,11 @@ pub fn build(b: *std.Build) void {
     const events_run_step = b.step("events", "Run example/events.zig");
     const events = b.addExecutable(.{
         .name = "events",
-        .root_source_file = b.path("examples/events.zig"),
-        .target = target,
-        .optimize = optimize,
+        .root_module = b.addModule("event-example", .{
+            .root_source_file = b.path("examples/events.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
     });
     events.root_module.addImport("ztb", ztb_mod);
     b.installArtifact(events);
